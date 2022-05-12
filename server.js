@@ -41,6 +41,7 @@ async function run() {
     // Load products
     app.get("/products", async (req, res) => {
       const page = parseInt(req.query.page);
+      console.log(page);
       const query = {};
       const cursor = productCollection.find(query);
       let products;
@@ -63,10 +64,10 @@ async function run() {
 
     // Setting Cart Product
     app.post("/cartProducts", verifyJWT, async (req, res) => {
-      const uid = req.body.uid;
-      const decodedUid = req.decoded.uid;
+      const userId = req.body.userId;
+      const decodedUserId = req.decoded.userId;
 
-      if (uid === decodedUid) {
+      if (userId === decodedUserId) {
         const keys = req.body.keys;
         const ids = keys.map((id) => ObjectId(id));
         const query = { _id: { $in: ids } };
@@ -78,8 +79,8 @@ async function run() {
 
     // Get Token
     app.post("/getToken", async (req, res) => {
-      const user = req.body.userId;
-      const accessToken = jwt.sign({ user }, process.env.ACCESS_TOKEN, {
+      const userId = req.body.userId;
+      const accessToken = jwt.sign({ userId }, process.env.ACCESS_TOKEN, {
         expiresIn: "1d",
       });
       res.send({ accessToken });
