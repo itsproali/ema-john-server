@@ -21,7 +21,6 @@ const verifyJWT = (req, res, next) => {
     if (err) {
       res.status(403).send({ message: "Forbidden Access" });
     }
-    console.log(decoded);
     req.decoded = decoded;
     next();
   });
@@ -60,17 +59,21 @@ async function run() {
     app.get("/count", async (req, res) => {
       const count = await productCollection.estimatedDocumentCount();
       res.send({ count });
+    });
 
-      // Setting Cart Product
-      app.post("/cartProducts", verifyJWT, async (req, res) => {
-        const keys = req.body;
-        // console.log(keys);
+    // Setting Cart Product
+    app.post("/cartProducts", verifyJWT, async (req, res) => {
+      const uid = req.body.uid;
+      const decodedUid = req.decoded.uid;
+
+      if (uid === decodedUid) {
+        const keys = req.body.keys;
         const ids = keys.map((id) => ObjectId(id));
         const query = { _id: { $in: ids } };
         const cursor = productCollection.find(query);
         const result = await cursor.toArray();
         res.send(result);
-      });
+      }
     });
 
     // Get Token
