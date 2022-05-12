@@ -1,12 +1,31 @@
 const express = require("express");
-const app = express();
 const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const cors = require("cors");
 require("dotenv").config();
+const jwt = require("jsonwebtoken");
+const app = express();
 
+// middleware
 app.use(cors());
 app.use(express.json());
+
+const verifyJWT = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  console.log(authHeader);
+  if (!authHeader) {
+    res.status(401).send({ message: "Reauthorized Access" });
+  }
+  const token = authHeader.split(" ")[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded) => {
+    if (err) {
+      res.status(403).send({ message: "Forbidden Access" });
+    }
+    console.log(decoded);
+    req.decoded = decoded;
+    next();
+  });
+};
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster1.jggf1.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
@@ -43,15 +62,24 @@ async function run() {
       res.send({ count });
 
       // Setting Cart Product
-      app.post("/cartProducts", async (req, res) => {
+      app.post("/cartProducts", verifyJWT, async (req, res) => {
         const keys = req.body;
         // console.log(keys);
         const ids = keys.map((id) => ObjectId(id));
         const query = { _id: { $in: ids } };
         const cursor = productCollection.find(query);
         const result = await cursor.toArray();
-        res.send(result);``
+        res.send(result);
       });
+    });
+
+    // Get Token
+    app.post("/getToken", async (req, res) => {
+      const user = req.body.userId;
+      const accessToken = jwt.sign({ user }, process.env.ACCESS_TOKEN, {
+        expiresIn: "1d",
+      });
+      res.send({ accessToken });
     });
   } finally {
     // client.close()
@@ -61,8 +89,8 @@ async function run() {
 run().catch(console.dir);
 
 app.get("/", (req, res) => {
-  res.send("Welcome to Ema John server")
-})
+  res.send("Welcome to Ema John server");
+});
 
 app.listen(port, () => {
   console.log("Server Running on: ", port);
