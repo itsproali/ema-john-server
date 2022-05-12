@@ -45,7 +45,7 @@ async function run() {
       // Setting Cart Product
       app.post("/cartProducts", async (req, res) => {
         const keys = req.body;
-        console.log(keys);
+        // console.log(keys);
         const ids = keys.map((id) => ObjectId(id));
         const query = { _id: { $in: ids } };
         const cursor = productCollection.find(query);
